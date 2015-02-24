@@ -97,7 +97,7 @@ function widget($args, $instance)
 	 $top_level_pages = get_pages("parent=$page_id&sort_column=menu_order");
 	 	if($top_level_pages)
 	 	{
-			print '<ul id="subpageswidget">';
+			print '<ul class="subpageswidget">';
 	 	foreach($top_level_pages as $page) {
 	 	$p_id = $page->ID;
 	 	levelFunction($p_id, $page);

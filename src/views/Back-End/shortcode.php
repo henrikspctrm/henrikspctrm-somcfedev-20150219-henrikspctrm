@@ -1,10 +1,11 @@
-<?php 
+<?php
 
 add_action( 'admin_menu', 'somcfedev_admin_menu' );
 add_action('admin_enqueue_scripts','somcfedev_add_script');
 
 function somcfedev_add_script()
-{   
+{
+
 	global 	$somcfedev_plugin_version;
 
 	if( !wp_script_is( 'jquery' ) )
@@ -15,7 +16,24 @@ function somcfedev_add_script()
 	wp_enqueue_script('shortcode_js',somcfedev_sub_pages::somcfedev_get_plugin_dir_url().'/js/jquery_create_shortocode.js',array('jquery'), $somcfedev_plugin_version);
 	
 }
-
+function levelShortCodeFunction($p_id, $page){
+	global $somcfedev_str;
+	$children = get_pages("child_of=$p_id&sort_column=post_title");
+	$immediate_children = get_pages("child_of=$p_id&parent=$p_id&sort_column=post_title");
+	if($children) {
+		$titletruncated = (strlen($page->post_title) > 13) ? substr($page->post_title,0,20).'...' : $page->post_title;
+		$somcfedev_str .= '<li class="subp">'  . get_the_post_thumbnail($page->ID,array( 20, 20)) . $titletruncated  .  '<span class="icon-sort"></span>';
+		$somcfedev_str .= '<ul>';
+		foreach($immediate_children as $child) {
+			levelShortCodeFunction($child->ID, $child);
+		}
+		$somcfedev_str .= '</ul></li>';
+	}
+	else {
+		$titletruncated = (strlen($page->post_title) > 13) ? substr($page->post_title,0,20).'...' : $page->post_title;
+		$somcfedev_str .= '<li class="subp singlesp">' . get_the_post_thumbnail($page->ID,array( 20, 20)) . $titletruncated  . '</li>';
+	}
+}
 /**
  *  It is used to add the option page for the plugin page.
 
@@ -39,7 +57,7 @@ function somcfedev_options_page() {
         <form action="" method="POST">
             
              <h3><?php _e('Sub Page Display Options','subpage'); ?></h3>
-             <h4><?php _e('Select the subpage dislaying options if subpage exists for that particular parent page.','subpage');?></h4>
+             <h4><?php _e('Select the subpage dislaying options if subpage exists for the particular current page it is placed on','subpage');?></h4>
           
              <table class="form-table">
              	<tbody>
@@ -69,62 +87,43 @@ function somcfedev_options_page() {
     <?php
 }
 
+
+
+
 /**
- *  It is used to render the output when the shortcode is called.	 
+ *  used to render the output when the shortcode is called.
 
  */
 function somcfedev_shortcode($atts)
 {
 	global $post;
 	extract(shortcode_atts(array(
-					'title' => '',
-				), $atts));
+		'title' => '',
+	), $atts));
 
-	
+	global $somcfedev_str;
 	$title = empty($title) ? 'Pages' : $title;
-	 
-	$depth=empty($depth) ? '0' : $depth;
 
 	 
 	$somcfedev_str = '';
 	$somcfedev_str .= '<div class="somcfedev_container">';
 	$somcfedev_str .= '<h3 class="widget_title">'.$title.'</h3>' ;
-	 
-	// WIDGET CODE GOES HERE
-	 
+	// WIDGET CODE
+
 	$page_id= $post->ID;
-	
-	$args = array(
-			'post_parent' => $page_id,
-			'post_status' => 'publish',
-			'post_type' => 'page',
-	);
-	
-	$attachments = get_children( $args );
-	
-   	$somcfedev_str .= '<ul class="somcfedev_page_list">';
-   	if($attachments)
-   	{
-		foreach($attachments as $attachment)
-   	    	{
-   	    		$somcfedev_str .= '<li><a href="'.$attachment->guid.'">'.$attachment->post_title.'</a></li>';
-   	    	}
-   	}
-   	else 
-   	{	$args = array(
-   				'depth'=> $depth,
-   	    		'title_li' => '',
-   				'echo' => 0,
-   				'post_type'    => 'page',
-   				'post_status'  => 'publish',
-   			);
-   				$pages = wp_list_pages($args);
-   				
-   				$somcfedev_str .= $pages;
-   	}
-   	
-   	$somcfedev_str .= '</ul>';
-	$somcfedev_str .= '</div>';
+	//get currentpage as top
+	$top_level_pages = get_pages("parent=$page_id&sort_column=menu_order");
+	if($top_level_pages)
+	{
+		$somcfedev_str .=  '<ul class="subpageswidget">';
+		foreach($top_level_pages as $page) {
+			$p_id = $page->ID;
+			levelShortCodeFunction($p_id, $page);
+		}
+		$somcfedev_str .=  '</ul>';
+	}
+
+	$somcfedev_str .=  '</div>';
 	
 	return $somcfedev_str;
    }
