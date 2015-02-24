@@ -4,7 +4,7 @@ Plugin Name: somc-fedev-20150219-henrikspctrm
 Plugin URI: http://informationsmagi.se/henrik/about
 Description: widget and shortcode displaying sub pages.
 Author: Henrik Dahlström
-Version: 0.02
+Version: 0.03
 Author URI: http://spctrm.se
 */
 
